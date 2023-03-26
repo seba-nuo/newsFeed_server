@@ -22,7 +22,7 @@ async function main() {
     res.send('Got a GET request')
   })
   app.post('/signup', async (req: express.Request, res: express.Response) => {
-    const status = await saveUser(req.body.user)
+    const status = await saveUser(req.body)
     res.json({ status })
   })
 

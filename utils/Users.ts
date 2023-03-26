@@ -7,11 +7,10 @@ const prisma = new PrismaClient()
 
 export async function saveUser(userReq: User) {
   const saltRounds = 10;
-  const myPlaintextPassword = 's0/\/\P4$$w0rD';
 
   let status = "approved"
   const salt = await bcrypt.genSalt(saltRounds)
-  const hash = await bcrypt.hash(myPlaintextPassword, salt)  
+  const hash = await bcrypt.hash(userReq.password, salt)  
   const userWithHashPass = {
     name: userReq.name,
     email: userReq.email,
@@ -24,13 +23,24 @@ export async function saveUser(userReq: User) {
 }
 
 export async function getUser(userReq: User) {
-  const user = await prisma.user.findFirst({
+  let status = "approved"
+  let user = await prisma.user.findFirst({
     where: {
-      email: userReq.email,
-      password: userReq.password
+      name: userReq.name,
+      email: userReq.email
     }
   })
-  let status = user === null ? "error" : "approved"
+  if(user === null) {
+    status = "error"
+    return [user, status]
+  }
+
+  const result = await bcrypt.compare(userReq.password, user.password)
+  if(!result) {
+    status = "error" // this could handle as incorrect user
+    user = null
+    return [user, status]
+  }
 
   return [user, status]
 }

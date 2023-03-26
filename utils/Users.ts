@@ -1,6 +1,6 @@
 
 import bcrypt from 'bcrypt';
-import { User } from '../types'
+import { Status, User } from '../types'
 import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
@@ -8,7 +8,7 @@ const prisma = new PrismaClient()
 export async function saveUser(userReq: User) {
   const saltRounds = 10;
 
-  let status = "approved"
+  let status: Status = "success"
   const salt = await bcrypt.genSalt(saltRounds)
   const hash = await bcrypt.hash(userReq.password, salt)  
   const userWithHashPass = {
@@ -23,7 +23,7 @@ export async function saveUser(userReq: User) {
 }
 
 export async function getUser(userReq: User) {
-  let status = "approved"
+  let status: Status = "success"
   let user = await prisma.user.findFirst({
     where: {
       name: userReq.name,
@@ -32,15 +32,15 @@ export async function getUser(userReq: User) {
   })
   if(user === null) {
     status = "error"
-    return [user, status]
+    return {user, status}
   }
 
   const result = await bcrypt.compare(userReq.password, user.password)
   if(!result) {
     status = "error" // this could handle as incorrect user
     user = null
-    return [user, status]
+    return {user, status}
   }
 
-  return [user, status]
+  return {user, status}
 }
